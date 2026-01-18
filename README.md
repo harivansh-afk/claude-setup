@@ -19,22 +19,33 @@ cd claude-setup
 ## What Gets Installed
 
 ### Plugins
-- compound-engineering (every-marketplace)
-- ralph-wiggum (autonomous coding loops)
-- ralph-loop (background agent loops)
-- code-simplifier (official Anthropic)
+| Plugin | Source | Description |
+|--------|--------|-------------|
+| compound-engineering | every-marketplace | 60+ agents, skills, and commands for development workflows |
+| ralph-wiggum | claude-plugins-official | Autonomous coding loops |
+| code-simplifier | claude-plugins-official | Code clarity and maintainability |
 
 ### Skills
-- eval-skill (verifiable code generation with evals)
-- Vercel agent-skills (React/Next.js best practices)
-- rams (accessibility and design reviews)
-
-### Tools
-- agent-browser (browser automation CLI for agents)
+| Skill | Source | Description |
+|-------|--------|-------------|
+| eval-skill | [harivansh-afk/eval-skill](https://github.com/harivansh-afk/eval-skill) | Verifiable code generation with evals |
+| vercel agent-skills | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | React/Next.js best practices |
+| rams | [elirousso/rams](https://github.com/elirousso/rams) | Accessibility and design reviews |
+| browser | [anthropics/claude-code](https://github.com/anthropics/claude-code) | Playwright browser automation |
 
 ### MCP Servers
-- context7 (library documentation)
-- exa (web search and code context)
+| Server | Source | Description |
+|--------|--------|-------------|
+| context7 | [context7.com](https://context7.com) | Up-to-date library documentation |
+| axiom | [axiomhq/mcp](https://github.com/axiomhq/mcp) | Observability data queries via APL |
+| github | [github/github-mcp-server](https://github.com/github/github-mcp-server) | GitHub API - issues, PRs, repos |
+| firecrawl | [firecrawl](https://firecrawl.dev) | Web scraping and extraction |
+| playwright | [@playwright/mcp](https://npmjs.com/package/@anthropic-ai/playwright-mcp) | Browser automation for testing |
+
+### Tools
+| Tool | Source | Description |
+|------|--------|-------------|
+| agent-browser | npm | Browser automation CLI for agents |
 
 ## Post-Install
 
@@ -45,12 +56,23 @@ Add your API keys to `~/.claude/settings.json`:
   "mcpServers": {
     "context7": {
       "headers": {
-        "CONTEXT7_API_KEY": "your-key-here"
+        "CONTEXT7_API_KEY": "your-key"
       }
     },
-    "exa": {
+    "axiom": {
       "env": {
-        "EXA_API_KEY": "your-key-here"
+        "AXIOM_TOKEN": "xapt-your-token",
+        "AXIOM_ORG_ID": "your-org-id"
+      }
+    },
+    "github": {
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_your-token"
+      }
+    },
+    "firecrawl": {
+      "env": {
+        "FIRECRAWL_API_KEY": "your-key"
       }
     }
   }
@@ -59,8 +81,6 @@ Add your API keys to `~/.claude/settings.json`:
 
 ## Usage
 
-After install:
-
 ```bash
 # Verify plugins
 claude plugin list
@@ -68,9 +88,26 @@ claude plugin list
 # Start Claude
 claude
 
-# Use eval skill
+# Use skills
 /eval build <name>
-
-# Use rams for design review
 /rams
+/browser
 ```
+
+## Manual Install (Individual Components)
+
+### Plugins
+```bash
+claude plugin install compound-engineering --marketplace every-marketplace
+claude plugin install ralph-wiggum
+claude plugin install code-simplifier
+```
+
+### Skills
+```bash
+npx add-skill vercel-labs/agent-skills
+npx add-skill elirousso/rams
+```
+
+### MCP Servers
+See `~/.claude/mcp-servers.json` after running install.sh for full config.

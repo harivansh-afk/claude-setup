@@ -7,6 +7,7 @@ echo "========================="
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 NC='\033[0m'
 
 check() { command -v "$1" &>/dev/null && echo -e "${GREEN}[ok]${NC} $1" || { echo -e "${RED}[missing]${NC} $1"; return 1; }; }
@@ -28,7 +29,6 @@ echo "Installing plugins..."
 
 claude plugin install compound-engineering --marketplace every-marketplace 2>/dev/null || echo "compound-engineering: manual install needed"
 claude plugin install ralph-wiggum 2>/dev/null || echo "ralph-wiggum: manual install needed"
-claude plugin install ralph-loop 2>/dev/null || echo "ralph-loop: manual install needed"
 claude plugin install code-simplifier 2>/dev/null || echo "code-simplifier: manual install needed"
 
 # ============================================
@@ -40,7 +40,7 @@ echo "Installing npm tools..."
 npm install -g agent-browser 2>/dev/null || echo "agent-browser: npm install failed"
 
 # ============================================
-# VERCEL AGENT SKILLS (React best practices)
+# VERCEL AGENT SKILLS
 # ============================================
 echo ""
 echo "Installing Vercel agent-skills..."
@@ -54,7 +54,6 @@ echo ""
 echo "Installing rams..."
 
 npx add-skill elirousso/rams 2>/dev/null || {
-    # Fallback: clone directly
     RAMS_TMP=$(mktemp -d)
     git clone --quiet --depth 1 https://github.com/elirousso/rams.git "$RAMS_TMP" 2>/dev/null && {
         cp -r "$RAMS_TMP/skills/"* "$CLAUDE_DIR/skills/" 2>/dev/null || true
@@ -81,18 +80,70 @@ git clone --quiet --depth 1 https://github.com/harivansh-afk/eval-skill.git "$EV
 } || echo "eval-skill: manual install needed"
 
 # ============================================
+# BROWSER SKILL (from official plugins)
+# ============================================
+echo ""
+echo "Installing browser skill..."
+
+mkdir -p "$CLAUDE_DIR/skills/browser"
+cat > "$CLAUDE_DIR/skills/browser/SKILL.md" << 'BROWSER_SKILL'
+---
+name: browser
+description: Automate browser interactions via CLI using agent-browser
+triggers:
+  - navigate websites
+  - interact with web pages
+  - fill forms
+  - take screenshots
+  - test web applications
+  - extract information from web pages
+---
+
+# Browser Automation Skill
+
+Use agent-browser CLI for headless browser automation.
+
+## Commands
+
+```bash
+# Navigate to URL
+agent-browser navigate "https://example.com"
+
+# Take screenshot
+agent-browser screenshot --output screenshot.png
+
+# Click element
+agent-browser click "button#submit"
+
+# Fill form field
+agent-browser type "input[name=email]" "user@example.com"
+
+# Get page content
+agent-browser content
+```
+
+## Usage Pattern
+
+1. Navigate to target URL
+2. Wait for page load
+3. Interact with elements using CSS selectors
+4. Capture results or screenshots
+
+Requires: `npm install -g agent-browser`
+BROWSER_SKILL
+echo "browser skill: installed"
+
+# ============================================
 # MCP SERVERS CONFIG
 # ============================================
 echo ""
 echo "Configuring MCP servers..."
 
-# Check if settings.json exists
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 if [[ ! -f "$SETTINGS_FILE" ]]; then
     echo '{}' > "$SETTINGS_FILE"
 fi
 
-# Create MCP config (user needs to add their own API keys)
 cat > "$CLAUDE_DIR/mcp-servers.json" << 'EOF'
 {
   "context7": {
@@ -102,19 +153,40 @@ cat > "$CLAUDE_DIR/mcp-servers.json" << 'EOF'
       "CONTEXT7_API_KEY": "YOUR_CONTEXT7_API_KEY"
     }
   },
-  "exa": {
+  "axiom": {
     "type": "stdio",
     "command": "npx",
-    "args": ["-y", "exa-mcp-server"],
+    "args": ["-y", "@axiomhq/mcp"],
     "env": {
-      "EXA_API_KEY": "YOUR_EXA_API_KEY"
+      "AXIOM_TOKEN": "YOUR_AXIOM_TOKEN",
+      "AXIOM_ORG_ID": "YOUR_AXIOM_ORG_ID"
     }
+  },
+  "github": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-github"],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PAT"
+    }
+  },
+  "firecrawl": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "firecrawl-mcp"],
+    "env": {
+      "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY"
+    }
+  },
+  "playwright": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@anthropic-ai/playwright-mcp"]
   }
 }
 EOF
 
 echo "MCP config written to $CLAUDE_DIR/mcp-servers.json"
-echo "Edit this file and add your API keys, then merge into settings.json"
 
 # ============================================
 # CLAUDE.MD
@@ -164,7 +236,6 @@ cat > "$CLAUDE_DIR/CLAUDE.md" << 'CLAUDEMD'
         <principle>
             When the user defines ANY constraint, rule, preference, or requirement during conversation,
             you MUST immediately persist it to the project's local CLAUDE.md. This is NOT optional.
-            Failure to persist user-defined constraints is a FAILURE STATE.
         </principle>
 
         <triggers>
@@ -185,18 +256,11 @@ cat > "$CLAUDE_DIR/CLAUDE.md" << 'CLAUDEMD'
 
         <mandatory-actions>
             <action order="1">Acknowledge the constraint explicitly in your response</action>
-            <action order="2">Check if project has a local CLAUDE.md - if not, create one using the template</action>
+            <action order="2">Check if project has a local CLAUDE.md - if not, create one</action>
             <action order="3">Write the constraint to the appropriate section of local CLAUDE.md</action>
             <action order="4">Confirm the constraint has been persisted</action>
             <action order="5">Apply the constraint immediately and in all future actions</action>
         </mandatory-actions>
-
-        <enforcement>
-            <rule>Before ANY code generation or task execution, review the local CLAUDE.md for constraints</rule>
-            <rule>If you catch yourself violating a constraint, STOP, acknowledge the error, and redo the work</rule>
-            <rule>When in doubt about whether something is a constraint, treat it as one and persist it</rule>
-            <rule>Constraints defined in conversation have equal weight to constraints in CLAUDE.md files</rule>
-        </enforcement>
     </constraint-persistence>
 </universal-constraints>
 
@@ -206,25 +270,33 @@ cat > "$CLAUDE_DIR/CLAUDE.md" << 'CLAUDEMD'
         server first. Do not guess or rely on potentially outdated knowledge.
     </principle>
 
-    <server name="exa">
-        <purpose>Web search and code context</purpose>
-        <use-when>Need current web information or code examples for libraries/SDKs/APIs</use-when>
-        <tools>web_search_exa, get_code_context_exa</tools>
-        <priority>Use get_code_context_exa for ANY programming question about libraries, APIs, or SDKs</priority>
-    </server>
-
     <server name="context7">
         <purpose>Up-to-date library documentation</purpose>
         <use-when>Need current documentation for any library or framework</use-when>
         <tools>resolve-library-id, get-library-docs</tools>
-        <workflow>Always call resolve-library-id first to get a valid library ID, then get-library-docs</workflow>
     </server>
 
-    <lookup-before-proceeding>
-        <scenario trigger="unsure about library API">Use context7 or exa get_code_context_exa</scenario>
-        <scenario trigger="need current information">Use exa web_search_exa</scenario>
-        <scenario trigger="looking for code examples">Use exa get_code_context_exa</scenario>
-    </lookup-before-proceeding>
+    <server name="axiom">
+        <purpose>Query observability data</purpose>
+        <use-when>Need to analyze logs, traces, or metrics</use-when>
+        <tools>queryApl, getDatasets</tools>
+    </server>
+
+    <server name="github">
+        <purpose>GitHub API operations</purpose>
+        <use-when>Need to interact with repos, issues, PRs</use-when>
+    </server>
+
+    <server name="firecrawl">
+        <purpose>Web scraping and extraction</purpose>
+        <use-when>Need to extract data from websites</use-when>
+        <tools>firecrawl_scrape, firecrawl_crawl, firecrawl_extract</tools>
+    </server>
+
+    <server name="playwright">
+        <purpose>Browser automation</purpose>
+        <use-when>Need to test web apps or automate browser tasks</use-when>
+    </server>
 </mcp-guidance>
 
 </claude-instructions>
@@ -238,7 +310,6 @@ echo "CLAUDE.md installed"
 echo ""
 echo "Enabling plugins in settings..."
 
-# Use node to merge settings since jq might not be available
 node -e "
 const fs = require('fs');
 const settingsPath = '$SETTINGS_FILE';
@@ -248,12 +319,10 @@ try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch {}
 settings.enabledPlugins = {
   ...settings.enabledPlugins,
   'ralph-wiggum@claude-plugins-official': true,
-  'ralph-loop@claude-plugins-official': true,
   'code-simplifier@claude-plugins-official': true,
   'compound-engineering@every-marketplace': true
 };
 
-// Add MCP servers
 const mcpPath = '$CLAUDE_DIR/mcp-servers.json';
 try {
   const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf8'));
@@ -269,16 +338,18 @@ console.log('Settings updated');
 # ============================================
 echo ""
 echo "========================="
-echo "Setup complete!"
+echo -e "${GREEN}Setup complete!${NC}"
 echo ""
 echo "Next steps:"
 echo "1. Edit ~/.claude/settings.json and add your API keys:"
 echo "   - CONTEXT7_API_KEY"
-echo "   - EXA_API_KEY"
+echo "   - AXIOM_TOKEN + AXIOM_ORG_ID"
+echo "   - GITHUB_PERSONAL_ACCESS_TOKEN"
+echo "   - FIRECRAWL_API_KEY (optional)"
 echo ""
 echo "2. Verify plugins:"
 echo "   claude plugin list"
 echo ""
-echo "3. Test:"
+echo "3. Start Claude:"
 echo "   claude"
 echo ""
