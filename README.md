@@ -5,13 +5,13 @@ One-command setup for Claude Code with plugins, skills, and MCP servers.
 ## Quick Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/harivansh-afk/claude-setup/main/install.sh | bash
+curl -fsSL https://git.harivan.sh/harivansh-afk/claude-setup/raw/branch/main/install.sh | bash
 ```
 
 Or clone and run:
 
 ```bash
-git clone https://github.com/harivansh-afk/claude-setup.git
+git clone https://git.harivan.sh/harivansh-afk/claude-setup.git
 cd claude-setup
 ./install.sh
 ```
@@ -28,7 +28,7 @@ cd claude-setup
 ### Skills
 | Skill | Source | Description |
 |-------|--------|-------------|
-| eval-skill | [harivansh-afk/eval-skill](https://github.com/harivansh-afk/eval-skill) | Verifiable code generation with evals |
+| eval-skill | [harivansh-afk/eval-skill](https://git.harivan.sh/harivansh-afk/eval-skill) | Verifiable code generation with evals |
 | vercel agent-skills | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | React/Next.js best practices |
 | rams | [elirousso/rams](https://github.com/elirousso/rams) | Accessibility and design reviews |
 | browser | [anthropics/claude-code](https://github.com/anthropics/claude-code) | Playwright browser automation |
